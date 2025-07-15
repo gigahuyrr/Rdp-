@@ -1,0 +1,25 @@
+name: Windows RDP
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Set up ngrok & start tunnel
+      run: |
+        Invoke-WebRequest -Uri https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
+        Expand-Archive ngrok.zip
+        .\ngrok\ngrok authtoken ngrok config add-authtoken 2zuJrgpK0vFNiZ4PKlyTxWFwXnf_7awf7G1jvCw8v7sYCD9k2
+        Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd ngrok; .\ngrok tcp 3389"
+
+    - name: Enable RDP
+      run: |
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        net user runneradmin Giga@12345
+
+    - name: Keep alive
+      run: |
+        Start-Sleep -Seconds 21600  # Keeps it alive for 6 hours
